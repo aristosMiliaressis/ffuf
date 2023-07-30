@@ -80,6 +80,7 @@ func (c *Config) ToOptions() ConfigOptions {
 	o.Output.OutputSkipEmptyFile = c.OutputSkipEmptyFile
 
 	o.Filter.Mode = c.FilterMode
+	o.Filter.Prefix = c.FilterPrefix
 	o.Filter.Lines = ""
 	o.Filter.Regexp = ""
 	o.Filter.Size = ""

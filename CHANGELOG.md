@@ -1,6 +1,7 @@
 ## Changelog
 - master
   - New
+    - New CLI flag `-fp` to filter results with shared prefix, status & word count
   - Changed
     - Explicitly allow TLS1.0 
     - Fix markdown output file format

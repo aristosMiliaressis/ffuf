@@ -98,6 +98,7 @@ type FilterOptions struct {
 	Status string `json:"status"`
 	Time   string `json:"time"`
 	Words  string `json:"words"`
+	Prefix bool   `json:"prefix"`
 }
 
 type MatcherOptions struct {
@@ -507,8 +508,9 @@ func ConfigFromOptions(parseOpts *ConfigOptions, ctx context.Context, cancel con
 		errmsg := fmt.Sprintf("Unrecognized value for parameter mmode: %s, valid values are: and, or", parseOpts.Matcher.Mode)
 		errs.Add(fmt.Errorf(errmsg))
 	}
-	conf.FilterMode = parseOpts.Filter.Mode
 	conf.MatcherMode = parseOpts.Matcher.Mode
+	conf.FilterMode = parseOpts.Filter.Mode
+	conf.FilterPrefix = parseOpts.Filter.Prefix
 
 	if conf.AutoCalibrationPerHost {
 		// AutoCalibrationPerHost implies AutoCalibration

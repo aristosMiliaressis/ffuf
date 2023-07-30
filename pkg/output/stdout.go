@@ -312,15 +312,11 @@ func (s *Stdoutput) Finalize() error {
 }
 
 func (s *Stdoutput) Result(resp ffuf.Response) {
-	// Do we want to write request and response to a file
-	if len(s.config.OutputDirectory) > 0 {
-		resp.ResultFile = s.writeResultToFile(resp)
-	}
-
 	inputs := make(map[string][]byte, len(resp.Request.Input))
 	for k, v := range resp.Request.Input {
 		inputs[k] = v
 	}
+
 	sResult := ffuf.Result{
 		Input:            inputs,
 		Position:         resp.Request.Position,
@@ -336,9 +332,49 @@ func (s *Stdoutput) Result(resp ffuf.Response) {
 		ResultFile:       resp.ResultFile,
 		Host:             resp.Request.Host,
 	}
+
+	if s.config.FilterPrefix && s.HasFalsePositivePrefix(sResult) {
+		return
+	}
+
 	s.CurrentResults = append(s.CurrentResults, sResult)
+
+	// Do we want to write request and response to a file
+	if len(s.config.OutputDirectory) > 0 {
+		resp.ResultFile = s.writeResultToFile(resp)
+	}
+
 	// Output the result
 	s.PrintResult(sResult)
+}
+
+func (s *Stdoutput) HasFalsePositivePrefix(resp ffuf.Result) bool {
+	clusteredResults := map[string][]ffuf.Result{}
+	key := fmt.Sprintf("%d,%d", resp.StatusCode, resp.ContentWords)
+	clusteredResults[key] = append(clusteredResults[key], resp)
+
+	for _, result := range s.CurrentResults {
+		key := fmt.Sprintf("%d,%d", result.StatusCode, result.ContentWords)
+		clusteredResults[key] = append(clusteredResults[key], result)
+	}
+
+	for _, resultCluster := range clusteredResults {
+		prefixedResults := map[string][]ffuf.Result{}
+
+		for _, result := range resultCluster {
+			if len(string(result.Input["FUZZ"])) < 2 {
+				continue
+			}
+			prefixedResults[string(result.Input["FUZZ"])[0:2]] = append(prefixedResults[string(result.Input["FUZZ"])[0:2]], result)
+		}
+
+		for _, cluster := range prefixedResults {
+			if len(cluster) > 2 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (s *Stdoutput) writeResultToFile(resp ffuf.Response) string {
@@ -384,7 +420,7 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 	inputs := ""
 	if len(s.fuzzkeywords) > 1 {
 		for _, k := range s.fuzzkeywords {
-		    if ffuf.StrInSlice(k, s.config.CommandKeywords) {
+			if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
 				inputs = fmt.Sprintf("%s%s : %s ", inputs, k, strconv.Itoa(res.Position))
 			} else {
@@ -392,8 +428,8 @@ func (s *Stdoutput) prepareInputsOneLine(res ffuf.Result) string {
 			}
 		}
 	} else {
-        for _, k := range s.fuzzkeywords {
-		    if ffuf.StrInSlice(k, s.config.CommandKeywords) {
+		for _, k := range s.fuzzkeywords {
+			if ffuf.StrInSlice(k, s.config.CommandKeywords) {
 				// If we're using external command for input, display the position instead of input
 				inputs = strconv.Itoa(res.Position)
 			} else {

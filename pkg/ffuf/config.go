@@ -22,6 +22,7 @@ type Config struct {
 	DirSearchCompat         bool                  `json:"dirsearch_compatibility"`
 	Extensions              []string              `json:"extensions"`
 	FilterMode              string                `json:"fmode"`
+	FilterPrefix            bool                  `json:"fprefix"`
 	FollowRedirects         bool                  `json:"follow_redirects"`
 	Headers                 map[string]string     `json:"headers"`
 	IgnoreBody              bool                  `json:"ignorebody"`
@@ -86,6 +87,7 @@ func NewConfig(ctx context.Context, cancel context.CancelFunc) Config {
 	conf.DirSearchCompat = false
 	conf.Extensions = make([]string, 0)
 	conf.FilterMode = "or"
+	conf.FilterPrefix = false
 	conf.FollowRedirects = false
 	conf.Headers = make(map[string]string)
 	conf.IgnoreWordlistComments = false
